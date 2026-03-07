@@ -24,20 +24,30 @@
       <p class="app-subtitle">Pick a secret word for the guesser</p>
     </header>
 
-    <div class="hard-mode-toggle">
-      <label class="toggle-label" for="hard-mode-switch">
-        Hard Mode
-        <span class="toggle-hint">Must use revealed hints</span>
-      </label>
-      <button
-        id="hard-mode-switch"
-        class="toggle-switch"
-        role="switch"
-        aria-checked="false"
-        aria-label="Hard Mode"
-      >
-        <span class="toggle-knob"></span>
-      </button>
+    <div class="pick-options">
+      <div class="grade-selector">
+        <span class="grade-label">Word Level</span>
+        <div class="grade-buttons">
+          <button class="grade-btn active" data-grade="2">Grade 2</button>
+          <button class="grade-btn" data-grade="3">Grade 3</button>
+          <button class="grade-btn" data-grade="4">Grade 4</button>
+        </div>
+      </div>
+      <div class="hard-mode-row">
+        <label class="toggle-label" for="hard-mode-switch">
+          Hard Mode
+          <span class="toggle-hint">Must use revealed hints</span>
+        </label>
+        <button
+          id="hard-mode-switch"
+          class="toggle-switch"
+          role="switch"
+          aria-checked="false"
+          aria-label="Hard Mode"
+        >
+          <span class="toggle-knob"></span>
+        </button>
+      </div>
     </div>
 
     <div class="search-wrap">
@@ -81,7 +91,29 @@
   <div id="screen-guess" class="screen">
     <header class="app-header app-header--guess">
       <h1 class="app-title">Family Wordle</h1>
+      <button id="hint-btn" class="hint-btn" aria-label="Word suggestions">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="8"/>
+          <line x1="12" y1="16" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="8" y2="12"/>
+          <line x1="16" y1="12" x2="22" y2="12"/>
+        </svg>
+      </button>
     </header>
+
+    <!-- Hint panel overlay -->
+    <div id="hint-overlay" class="hint-overlay hidden" aria-hidden="true">
+      <div class="hint-panel">
+        <div class="hint-header">
+          <h3 class="hint-title">Try one of these?</h3>
+          <button id="hint-close" class="hint-close" aria-label="Close suggestions">&times;</button>
+        </div>
+        <div id="hint-words" class="hint-words"></div>
+        <button id="hint-refresh" class="btn btn-ghost hint-refresh-btn">Shuffle</button>
+      </div>
+    </div>
 
     <div id="guess-grid" class="guess-grid" role="grid" aria-label="Guess board">
       <!-- 6 rows × 5 tiles, built by JS -->

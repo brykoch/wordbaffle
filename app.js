@@ -13,10 +13,12 @@ let currentGuess = '';
 let gameOver     = false;
 let isAnimating  = false;       // prevents input during tile reveal
 let hardMode     = false;
+let selectedGrade = 2;          // current grade level filter
 let requiredPositions = {};     // { index: letter } — greens
 let requiredLetters   = {};     // { letter: minCount } — yellows + greens
 const MAX_GUESSES = 6;
 const WORD_LEN    = 5;
+const HINT_COUNT  = 8;
 
 // ── DOM refs ─────────────────────────────
 const screens = {
@@ -44,6 +46,12 @@ const finalBoard     = document.getElementById('final-board');
 const finalGuessGrid = document.getElementById('final-guess-grid');
 const hardModeSwitch = document.getElementById('hard-mode-switch');
 const srAnnouncer    = document.getElementById('sr-announcer');
+const hintBtn        = document.getElementById('hint-btn');
+const hintOverlay    = document.getElementById('hint-overlay');
+const hintClose      = document.getElementById('hint-close');
+const hintWords      = document.getElementById('hint-words');
+const hintRefresh    = document.getElementById('hint-refresh');
+const gradeButtons   = document.querySelectorAll('.grade-btn');
 
 // ── Screen-reader announcements ───────────
 function announce(message) {
@@ -70,13 +78,36 @@ hardModeSwitch.addEventListener('click', () => {
   announce(hardMode ? 'Hard mode enabled' : 'Hard mode disabled');
 });
 
+// ── Grade Filtering ──────────────────────
+function getWordsForGrade(grade) {
+  const words = [];
+  for (let g = 2; g <= grade; g++) {
+    if (WORD_GRADES[g]) words.push(...WORD_GRADES[g]);
+  }
+  return words.sort();
+}
+
+// ── Grade Selector ───────────────────────
+gradeButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedGrade = Number(btn.dataset.grade);
+    gradeButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedWord = '';
+    lockBtn.disabled = true;
+    buildWordGrid(wordSearch.value);
+    announce(`Grade ${selectedGrade} selected`);
+  });
+});
+
 // ── Word Picker ───────────────────────────
 let selectedWord = '';
 
 function buildWordGrid(filter = '') {
   wordGrid.innerHTML = '';
+  const gradeWords = getWordsForGrade(selectedGrade);
   const query = filter.trim().toUpperCase();
-  const filtered = query ? WORDS.filter(w => w.includes(query)) : WORDS;
+  const filtered = query ? gradeWords.filter(w => w.includes(query)) : gradeWords;
 
   if (filtered.length === 0) {
     const msg = document.createElement('div');
@@ -120,9 +151,10 @@ function selectWord(word) {
 lockBtn.addEventListener('click', () => {
   if (!selectedWord) return;
   secretWord = selectedWord;
-  // Disable hard mode toggle once game starts
+  // Disable options once game starts
   hardModeSwitch.disabled = true;
   hardModeSwitch.classList.add('disabled');
+  gradeButtons.forEach(b => b.classList.add('disabled'));
   showScreen('cover');
 });
 
@@ -213,6 +245,7 @@ function buildKeyboard() {
 // Also handle physical keyboard
 document.addEventListener('keydown', e => {
   if (!screens.guess.classList.contains('active')) return;
+  if (e.key === 'Escape') { closeHintPanel(); return; }
   if (e.metaKey || e.ctrlKey) return;
 
   if (e.key === 'Enter') {
@@ -447,6 +480,65 @@ function updateKeyboard(evaluation) {
   });
 }
 
+// ── Hint System ───────────────────────────
+function getHintWords() {
+  const guessedWords = new Set(guesses.map(row => row.map(e => e.letter).join('')));
+  const pool = getWordsForGrade(selectedGrade).filter(w => w !== secretWord && !guessedWords.has(w));
+  const onFifthGuess = guesses.length >= 4; // 0-indexed, so 4 = 5th guess
+
+  // Shuffle pool
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  let hints = pool.slice(0, onFifthGuess ? HINT_COUNT - 1 : HINT_COUNT);
+
+  // On 5th guess or later, sneak the answer into the list
+  if (onFifthGuess && !guessedWords.has(secretWord)) {
+    const insertAt = Math.floor(Math.random() * (hints.length + 1));
+    hints.splice(insertAt, 0, secretWord);
+  }
+
+  return hints;
+}
+
+function renderHintWords() {
+  hintWords.innerHTML = '';
+  const words = getHintWords();
+  words.forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'hint-word';
+    chip.textContent = word;
+    hintWords.appendChild(chip);
+  });
+}
+
+function openHintPanel() {
+  renderHintWords();
+  hintOverlay.classList.remove('hidden');
+  hintOverlay.setAttribute('aria-hidden', 'false');
+  hintClose.focus();
+}
+
+function closeHintPanel() {
+  hintOverlay.classList.add('hidden');
+  hintOverlay.setAttribute('aria-hidden', 'true');
+}
+
+hintBtn.addEventListener('click', () => {
+  if (gameOver) return;
+  openHintPanel();
+});
+
+hintClose.addEventListener('click', closeHintPanel);
+
+hintOverlay.addEventListener('click', (e) => {
+  if (e.target === hintOverlay) closeHintPanel();
+});
+
+hintRefresh.addEventListener('click', renderHintWords);
+
 // ── Toast ─────────────────────────────────
 let toastTimeout = null;
 
@@ -549,9 +641,11 @@ function resetGame() {
   requiredLetters   = {};
   lockBtn.disabled = true;
   wordSearch.value = '';
-  // Re-enable hard mode toggle
+  // Re-enable options
   hardModeSwitch.disabled = false;
   hardModeSwitch.classList.remove('disabled');
+  gradeButtons.forEach(b => b.classList.remove('disabled'));
+  closeHintPanel();
   buildWordGrid();
   showScreen('pick');
 }
