@@ -1,12 +1,12 @@
 # Wordbaffle
 
-Homage to a word guessing game you know and love—built for two: one player picks a secret five-letter word, hands the phone over, and the other player tries to guess it in six attempts.
+Inspired by the board game version of a word guessing game you love: one player picks a secret five-letter word, hands the phone over, and the other player tries to guess the word in six attempts.
 
-Built to enjoy on Saturday mornings with my daughter. No accounts, no installs, no ads. Just open and play!
+Built to enjoy on Saturday mornings with my daughter. We hope you enjoy it, too!
+
+No accounts. No installs. No ads. Just open and play!
 
 **[Play now](https://brykoch.github.io/wordbaffle/)**
-
-<button onclick="window.location.href='https://brykoch.github.io/wordbaffle/';">PLAY NOW</button>
 
 ## How to Play
 
