@@ -30,6 +30,7 @@ const screens = {
 const wordGrid       = document.getElementById('word-grid');
 const wordSearch     = document.getElementById('word-search');
 const lockBtn        = document.getElementById('lock-btn');
+const randomBtn      = document.getElementById('random-btn');
 const pickFooter     = document.getElementById('pick-footer');
 const readyBtn       = document.getElementById('ready-btn');
 const guessGrid      = document.getElementById('guess-grid');
@@ -98,6 +99,8 @@ gradeButtons.forEach(btn => {
     btn.classList.add('active');
     selectedWord = '';
     lockBtn.disabled = true;
+    lockBtn.style.display = 'none';
+    randomBtn.style.display = '';
     buildWordGrid(wordSearch.value);
     announce(`Grade ${selectedGrade} selected`);
   });
@@ -137,13 +140,15 @@ function selectWord(word) {
   if (selectedWord === word) {
     selectedWord = '';
     lockBtn.disabled = true;
-    pickFooter.classList.remove('visible');
+    lockBtn.style.display = 'none';
+    randomBtn.style.display = '';
     return;
   }
 
   selectedWord = word;
   lockBtn.disabled = false;
-  pickFooter.classList.add('visible');
+  lockBtn.style.display = '';
+  randomBtn.style.display = 'none';
 
   document.querySelectorAll('.word-card').forEach(c => {
     if (c.textContent === word) c.classList.add('selected');
@@ -163,10 +168,21 @@ lockBtn.addEventListener('click', () => {
   showScreen('cover');
 });
 
+randomBtn.addEventListener('click', () => {
+  const pool = getWordsForGrade(selectedGrade);
+  secretWord = pool[Math.floor(Math.random() * pool.length)];
+  // Disable options once game starts
+  hardModeSwitch.disabled = true;
+  hardModeSwitch.classList.add('disabled');
+  gradeButtons.forEach(b => b.classList.add('disabled'));
+  showScreen('cover');
+});
+
 wordSearch.addEventListener('input', () => {
   selectedWord = '';
   lockBtn.disabled = true;
-  pickFooter.classList.remove('visible');
+  lockBtn.style.display = 'none';
+  randomBtn.style.display = '';
   buildWordGrid(wordSearch.value);
 });
 
@@ -646,7 +662,8 @@ function resetGame() {
   requiredPositions = {};
   requiredLetters   = {};
   lockBtn.disabled = true;
-  pickFooter.classList.remove('visible');
+  lockBtn.style.display = 'none';
+  randomBtn.style.display = '';
   wordSearch.value = '';
   // Re-enable options
   hardModeSwitch.disabled = false;
